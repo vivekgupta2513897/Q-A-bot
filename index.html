@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q&A Chatbot</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            width: 400px;
+            padding: 20px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .settings, .chat-box {
+            margin-bottom: 20px;
+        }
+
+        .settings label, .chat-box label {
+            display: block;
+            margin-bottom: 8px;
+            color: #555;
+        }
+
+        .settings input, .settings select, .chat-box input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+
+        .chat-box input {
+            margin-bottom: 10px;
+        }
+
+        .response {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+            color: #333;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            width: 100%;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Q&A Chatbot</h1>
+
+        <div class="settings">
+            <label for="api_key">Enter Your API Key:</label>
+            <input type="password" id="api_key">
+
+            <label for="model">Select an OpenAI model:</label>
+            <select id="model">
+                <option value="gpt-4">gpt-4</option>
+                <option value="gpt-4-turbo">gpt-4-turbo</option>
+                <option value="gpt-4o">gpt-4o</option>
+            </select>
+
+            <label for="temperature">Temperature:</label>
+            <input type="range" id="temperature" min="0" max="1" step="0.1" value="0.5">
+
+            <label for="max_tokens">Max Tokens:</label>
+            <input type="number" id="max_tokens" min="50" max="300" value="150">
+        </div>
+
+        <div class="chat-box">
+            <label for="user_input">Ask a Question:</label>
+            <input type="text" id="user_input" placeholder="Your question here...">
+            <button id="ask_button">Ask</button>
+            <div id="response" class="response"></div>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById("ask_button").addEventListener("click", async () => {
+            const apiKey = document.getElementById("api_key").value;
+            const model = document.getElementById("model").value;
+            const temperature = parseFloat(document.getElementById("temperature").value);
+            const maxTokens = parseInt(document.getElementById("max_tokens").value);
+            const userInput = document.getElementById("user_input").value;
+
+            if (!apiKey || !userInput) {
+                document.getElementById("response").textContent = "Please provide an API key and input a question.";
+                return;
+            }
+
+            document.getElementById("response").textContent = "Fetching response...";
+
+            const payload = {
+                model: model,
+                messages: [
+                    { role: "system", content: "You are an assistant. Please respond to user queries." },
+                    { role: "user", content: `Question: ${userInput}` }
+                ],
+                temperature: temperature,
+                max_tokens: maxTokens
+            };
+
+            try {
+                const response = await fetch("https://api.openai.com/v1/chat/completions", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${apiKey}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!response.ok) {
+                    throw new Error("Failed to fetch response from OpenAI");
+                }
+
+                const data = await response.json();
+                const answer = data.choices[0]?.message?.content || "No response from the model.";
+
+                document.getElementById("response").textContent = answer;
+            } catch (error) {
+                document.getElementById("response").textContent = `Error: ${error.message}`;
+            }
+        });
+    </script>
+</body>
+</html>
